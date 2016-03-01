@@ -38,7 +38,7 @@ public:
         offset_y = y;
         delta.x = offset_x - last_x;
         delta.y = offset_y - last_y;
-        cout<<"offset: "<<offset_x<<","<<offset_y<<endl<<"delta: "<<delta.x<<","<<delta.y<<endl;
+       // cout<<"offset: "<<offset_x<<","<<offset_y<<endl<<"delta: "<<delta.x<<","<<delta.y<<endl;
     }
     void draw(SDL_Renderer* r){
         SDL_Texture* texture;
@@ -88,7 +88,7 @@ private:
         }
         else{
             for(; n >= 0; n--){
-                for(unsigned int i=tiles_x-2; i>=0; i--){
+                for(int i=tiles_x-2; i>=0; i--){
                     for(unsigned int j=0; j<tiles_y; j++){
                         tile_info[i+1][j] = tile_info[i][j];
                         if(i == 0){
@@ -103,11 +103,12 @@ private:
     void load_row(){
         last_y = offset_y;
         int n = abs(delta.y)/tile_rect.h - 1; //Need to determine how many rows need to be generated 
-        if(delta.y>0){
+        if(delta.y<0){
+            cout<<"moving up\n";
             for(; n >=0; n--){
                 //Need to shift tiles down and get new row on top
                 for(unsigned int i=0; i<tiles_x; i++){
-                    for(unsigned int j=tiles_y-2; j>=0; j++){
+                    for(int j=tiles_y-2; j>=0; j--){
                         tile_info[i][j+1] = tile_info[i][j];
                         if(j == 0){
                             tile_info[i][j].index = ((int)abs(offset_x + offset_y + i*j - (tile_rect.h*n))%13) % (tiles->max_frame + 1);

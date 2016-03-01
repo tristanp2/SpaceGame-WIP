@@ -62,8 +62,7 @@ public:
             update_objects(delta_t);
             screen_offset.x = player->pos.x - 400;    //using center as 0,0
             screen_offset.y = player->pos.y - 300;
-
-            if(frame_t > 16){
+            if(frame_t > 32){
                 draw_objects(r,window);
                 frame_t=0;
             }

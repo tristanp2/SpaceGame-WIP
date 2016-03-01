@@ -131,7 +131,7 @@ public:
         draw_rect.x=this->pos.x - draw_rect.w/2;
         draw_rect.y=this->pos.y - draw_rect.h/2;
         velocity=v;
-        direction= v / v.length();
+        direction =v.unit_vector();
         this->rotation=rotation;
         this->rspeed=rotv;
         this->ms_per_frame=pframe;
@@ -168,6 +168,7 @@ public:
 
         SDL_Texture* tex=SDL_CreateTextureFromSurface(r, scale_surf);
         SDL_RenderCopyEx(r, tex, NULL, &draw_rect, rotation, center, SDL_FLIP_NONE);
+        cout<<"drawn at "<<draw_rect.x<<","<<draw_rect.y<<endl;
 
         SDL_DestroyTexture(tex);
         SDL_FillRect(scale_surf,NULL,SDL_MapRGB(scale_surf->format,0,0xff,0xa1)); 
