@@ -44,10 +44,10 @@ public:
         SDL_Texture* texture;
         if(abs(delta.x) > tile_rect.w)  load_column();
         if((abs(delta.y)) > tile_rect.h)  load_row();
-        tile_rect.x = offset_x % tile_rect.w;
+        tile_rect.x = -offset_x % tile_rect.w;
         cout<<"offset: "<<offset_x<<","<<offset_y<<endl;
         for(unsigned int i=0; i<tiles_x; tile_rect.x+=tile_rect.w, i++){
-            tile_rect.y = offset_y % tile_rect.h;
+            tile_rect.y = -offset_y % tile_rect.h;
             for(unsigned int j=0; j<tiles_y; tile_rect.y+=tile_rect.h, j++){
                 SDL_BlitScaled((*tiles)[tile_info[i][j].index], NULL, scale_surf, NULL);
                 texture = SDL_CreateTextureFromSurface(r, scale_surf);
