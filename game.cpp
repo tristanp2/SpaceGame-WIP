@@ -25,7 +25,7 @@ public:
     Sprite *player_sprite, *back_tile, *bullet;
     list<GameObject> object_list;
     list<Effect> effect_list;
-    Point screen_offset;
+    Vector2d screen_offset;
     BackGround background;
     GameCanvas(){
         srand(time(NULL));

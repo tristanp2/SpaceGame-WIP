@@ -45,6 +45,7 @@ public:
         if(abs(delta.x) > tile_rect.w)  load_column();
         if((abs(delta.y)) > tile_rect.h)  load_row();
         tile_rect.x = offset_x % tile_rect.w;
+        cout<<"offset: "<<offset_x<<","<<offset_y<<endl;
         for(unsigned int i=0; i<tiles_x; tile_rect.x+=tile_rect.w, i++){
             tile_rect.y = offset_y % tile_rect.h;
             for(unsigned int j=0; j<tiles_y; tile_rect.y+=tile_rect.h, j++){
@@ -61,7 +62,8 @@ private:
     Point delta;
     SDL_Surface *scale_surf;
     SDL_Rect tile_rect;
-    unsigned int full_width, full_height, tiles_x, tiles_y, offset_x, offset_y,last_x,last_y;
+    unsigned int full_width, full_height, tiles_x, tiles_y;
+    int offset_x, offset_y,last_x,last_y;
 
     struct TileInfo{
         int index;

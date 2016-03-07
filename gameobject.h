@@ -168,12 +168,11 @@ public:
 
         SDL_Texture* tex=SDL_CreateTextureFromSurface(r, scale_surf);
         SDL_RenderCopyEx(r, tex, NULL, &draw_rect, rotation, center, SDL_FLIP_NONE);
-        cout<<"drawn at "<<draw_rect.x<<","<<draw_rect.y<<endl;
 
         SDL_DestroyTexture(tex);
         SDL_FillRect(scale_surf,NULL,SDL_MapRGB(scale_surf->format,0,0xff,0xa1)); 
     }
-    void update(int delta_ms, Point screen_offset){
+    void update(int delta_ms, Vector2d screen_offset){
         double delta_s = delta_ms / 1000.0;
         frame_dt+=delta_ms;
         double dec;

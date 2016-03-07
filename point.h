@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <iostream>
 
 class Point{
 public:
@@ -20,4 +21,8 @@ public:
         if(i==1)    return y;
         return 0;
     }
+	friend std::ostream & operator<< ( std::ostream& s, const Point& p){
+		 s << "(" << p.x << "," << p.y << ")";
+		 return s;
+	}
 };
