@@ -35,6 +35,7 @@ public:
         background = BackGround(back_tile,true,CANVAS_WIDTH,CANVAS_HEIGHT);
     }
     ~GameCanvas(){
+        background.tile_info_print();
     }
             
     void load_resources(){
