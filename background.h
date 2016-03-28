@@ -38,8 +38,8 @@ public:
         offset_y = y;
         delta.x = offset_x - last_x;
         delta.y = offset_y - last_y;
-        tile_rect.x -= delta.x;
-        tile_rect.y -= delta.y;
+        tile_rect.x = -tile_rect.w - delta.x;
+        tile_rect.y = -tile_rect.h - delta.y;
         if(tile_rect.x > 0 or tile_rect.x < -2*tile_rect.w){
             load_column();
             tile_rect.x = tile_rect.x % tile_rect.w;
@@ -51,11 +51,11 @@ public:
     }
     void draw(SDL_Renderer* r){
         SDL_Texture* texture;
-        int start_y,start_x;
+        int start_y, start_x;
         start_x = tile_rect.x;
         start_y = tile_rect.y;
         for(unsigned int i=0; i<tiles_x; tile_rect.x+=tile_rect.w, i++){
-            tile_rect.y = start_y - (offset_y % tile_rect.h);
+            tile_rect.y = start_y;
             for(unsigned int j=0; j<tiles_y; tile_rect.y+=tile_rect.h, j++){
                 SDL_BlitScaled((*tiles)[tile_info[i][j].index], NULL, scale_surf, NULL);
                 texture = SDL_CreateTextureFromSurface(r, scale_surf);
@@ -95,7 +95,8 @@ private:
     void load_column(){
         last_x = offset_x;
         int n = abs(delta.x)/tile_rect.w;
-        if(delta.x>0){
+        if(delta.x > 0){
+            cout<<"moving right\n";
             //Need to shift tiles to the left and get new column on right
             for(unsigned int i=1; i<tiles_x; i++){
                 for(unsigned int j=0; j<tiles_y; j++){
@@ -108,6 +109,7 @@ private:
             }
         }
         else{
+            cout<<"moving left\n";
             for(int i=tiles_x-2; i>=0; i--){
                 for(unsigned int j=0; j<tiles_y; j++){
                     tile_info[i+1][j] = tile_info[i][j];
