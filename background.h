@@ -38,25 +38,22 @@ public:
         offset_y = y;
         delta.x = offset_x - last_x;
         delta.y = offset_y - last_y;
-        cout<<"delta: "<<delta.x<<","<<delta.y<<endl;
+        if(tile_rect.x > 0 or tile_rect.x < -2*tile_rect.w){
+            load_column();
+            tile_rect.x = -abs(tile_rect.x % tile_rect.w);
+        }
+        if(tile_rect.y > 0 or tile_rect.y < -2*tile_rect.h){
+            load_row();
+            tile_rect.y = -abs(tile_rect.y % tile_rect.h);
+        }
     }
     void draw(SDL_Renderer* r){
         SDL_Texture* texture;
         int start_y,start_x;
-        tile_rect.x += delta.x;
-        tile_rect.y += delta.y;
-        cout<<"updated to "<<tile_rect.x<<","<<tile_rect.y<<endl;
-        if(tile_rect.x > 0 or tile_rect.x < -tile_rect.w){
-            load_column();
-            tile_rect.x = -tile_rect.w;
-        }
-        if(tile_rect.y > 0 or tile_rect.y < -tile_rect.h){
-            load_row();
-            tile_rect.y = -tile_rect.h;
-        }
+        tile_rect.x -= delta.x;
+        tile_rect.y -= delta.y;
         start_x = tile_rect.x;
         start_y = tile_rect.y;
-        cout<<"drawing from "<<tile_rect.x<<","<<tile_rect.y<<endl<<endl;
         for(unsigned int i=0; i<tiles_x; tile_rect.x+=tile_rect.w, i++){
             tile_rect.y = start_y - (offset_y % tile_rect.h);
             for(unsigned int j=0; j<tiles_y; tile_rect.y+=tile_rect.h, j++){
@@ -96,7 +93,6 @@ private:
     TileInfo** tile_info; 
 
     void load_column(){
-        cout<<"loading column\n";
         last_x = offset_x;
         int n = abs(delta.x)/tile_rect.w;
         if(delta.x>0){
@@ -124,11 +120,9 @@ private:
         }
     }       
     void load_row(){
-        cout<<"loading row\n";
         last_y = offset_y;
         int n = abs(delta.y)/tile_rect.h - 1; //Need to determine how many rows need to be generated 
         if(delta.y<0){
-            cout<<"moving up\n";
             //Need to shift tiles down and get new row on top
             for(unsigned int i=0; i<tiles_x; i++){
                 for(int j=tiles_y-2; j>=0; j--){
