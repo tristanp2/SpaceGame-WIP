@@ -38,20 +38,20 @@ public:
         offset_y = y;
         delta.x = offset_x - last_x;
         delta.y = offset_y - last_y;
+        tile_rect.x -= delta.x;
+        tile_rect.y -= delta.y;
         if(tile_rect.x > 0 or tile_rect.x < -2*tile_rect.w){
             load_column();
-            tile_rect.x = -abs(tile_rect.x % tile_rect.w);
+            tile_rect.x = tile_rect.x % tile_rect.w;
         }
         if(tile_rect.y > 0 or tile_rect.y < -2*tile_rect.h){
             load_row();
-            tile_rect.y = -abs(tile_rect.y % tile_rect.h);
+            tile_rect.y = tile_rect.y % tile_rect.h;
         }
     }
     void draw(SDL_Renderer* r){
         SDL_Texture* texture;
         int start_y,start_x;
-        tile_rect.x -= delta.x;
-        tile_rect.y -= delta.y;
         start_x = tile_rect.x;
         start_y = tile_rect.y;
         for(unsigned int i=0; i<tiles_x; tile_rect.x+=tile_rect.w, i++){
