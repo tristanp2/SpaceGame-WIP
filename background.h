@@ -42,11 +42,12 @@ public:
         tile_rect.y = -tile_rect.h - delta.y;
         if(tile_rect.x > 0 or tile_rect.x < -2*tile_rect.w){
             load_column();
-            tile_rect.x = tile_rect.x % tile_rect.w;
+            tile_rect.x = -tile_rect.w + tile_rect.x % tile_rect.w;
+            cout<<"new x: "<<tile_rect.x<<endl;
         }
         if(tile_rect.y > 0 or tile_rect.y < -2*tile_rect.h){
             load_row();
-            tile_rect.y = tile_rect.y % tile_rect.h;
+            tile_rect.y = -tile_rect.h + tile_rect.y % tile_rect.h;
         }
     }
     void draw(SDL_Renderer* r){
@@ -96,7 +97,6 @@ private:
         last_x = offset_x;
         int n = abs(delta.x)/tile_rect.w;
         if(delta.x > 0){
-            cout<<"moving right\n";
             //Need to shift tiles to the left and get new column on right
             for(unsigned int i=1; i<tiles_x; i++){
                 for(unsigned int j=0; j<tiles_y; j++){
@@ -109,7 +109,6 @@ private:
             }
         }
         else{
-            cout<<"moving left\n";
             for(int i=tiles_x-2; i>=0; i--){
                 for(unsigned int j=0; j<tiles_y; j++){
                     tile_info[i+1][j] = tile_info[i][j];
@@ -124,12 +123,13 @@ private:
     void load_row(){
         last_y = offset_y;
         int n = abs(delta.y)/tile_rect.h - 1; //Need to determine how many rows need to be generated 
-        if(delta.y<0){
-            //Need to shift tiles down and get new row on top
+        if(delta.y > 0){
+            cout<<"moving down\n";
+            //Need to shift tiles up and get new row on bottom
             for(unsigned int i=0; i<tiles_x; i++){
-                for(int j=tiles_y-2; j>=0; j--){
-                    tile_info[i][j+1] = tile_info[i][j];
-                    if(j == 0){
+                for(unsigned int j=1; j<tiles_y; j++){
+                    tile_info[i][j-1] = tile_info[i][j];
+                    if(i == tiles_y-1){
                         tile_info[i][j].index = rand() % (tiles->max_frame + 1);
                         tile_info[i][j].flip = get_flip(rand()%4);
                     }
@@ -137,10 +137,11 @@ private:
             }
         }
         else{
+            cout<<"moving up\n";
             for(unsigned int i=0; i<tiles_x; i++){
-                for(unsigned int j=1; j<tiles_y; j++){
-                    tile_info[i][j-1] = tile_info[i][j];
-                    if(i == tiles_y-1){
+                for(unsigned int j=tiles_y-2; j>=0; j--){
+                    tile_info[i][j+1] = tile_info[i][j];
+                    if(j == 0){
                         tile_info[i][j].index = rand() % (tiles->max_frame + 1);
                         tile_info[i][j].flip = get_flip(rand()%4);
                     }
