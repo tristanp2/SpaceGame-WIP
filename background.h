@@ -129,7 +129,7 @@ private:
             for(unsigned int i=0; i<tiles_x; i++){
                 for(unsigned int j=1; j<tiles_y; j++){
                     tile_info[i][j-1] = tile_info[i][j];
-                    if(i == tiles_y-1){
+                    if(j == tiles_y-1){
                         tile_info[i][j].index = rand() % (tiles->max_frame + 1);
                         tile_info[i][j].flip = get_flip(rand()%4);
                     }
