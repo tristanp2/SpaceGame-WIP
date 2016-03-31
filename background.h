@@ -96,27 +96,28 @@ private:
     void load_column(){
         last_x = offset_x;
         int n = abs(delta.x)/tile_rect.w;
+        int i;
         if(delta.x > 0){
             //Need to shift tiles to the left and get new column on right
-            for(unsigned int i=1; i<tiles_x; i++){
+            for(i=1; i<tiles_x; i++){
                 for(unsigned int j=0; j<tiles_y; j++){
                     tile_info[i-1][j] = tile_info[i][j];
                 }
             }
-            int i = tiles_x - 1;
+            i--;
             for(int j=0; j<tiles_y; j++){
                 tile_info[i][j].index = rand() % (tiles->max_frame + 1);
                 tile_info[i][j].flip = get_flip(rand()%4);
             }
         }
         else{
-            for(int i=tiles_x-2; i>=0; i--){
+            for(i=tiles_x-2; i>=0; i--){
                 for(unsigned int j=0; j<tiles_y; j++){
                     tile_info[i+1][j] = tile_info[i][j];
                 }
             }
-            int i = 0;
-            for(int j=0; j<tiles_y; j++){
+            i++;
+            for(unsigned int j=0; j<tiles_y; j++){
                 tile_info[i][j].index = rand() % (tiles->max_frame + 1);
                 tile_info[i][j].flip = get_flip(rand()%4);
             }
@@ -125,15 +126,16 @@ private:
     void load_row(){
         last_y = offset_y;
         int n = abs(delta.y)/tile_rect.h - 1; //Need to determine how many rows need to be generated 
+        int j;
         if(delta.y > 0){
             cout<<"moving down\n";
             //Need to shift tiles up and get new row on bottom
             for(unsigned int i=0; i<tiles_x; i++){
-                for(unsigned int j=1; j<tiles_y; j++){
+                for(j=1; j<tiles_y; j++){
                     tile_info[i][j-1] = tile_info[i][j];
                 }
             }
-            int j = tiles_y-1;
+            j--;
             for(int i=0; i<tiles_x; i++){
                 tile_info[i][j].index = rand() % (tiles->max_frame + 1);
                 tile_info[i][j].flip = get_flip(rand()%4);
@@ -142,11 +144,11 @@ private:
         else{
             cout<<"moving up\n";
             for(unsigned int i=0; i<tiles_x; i++){
-                for(int j=tiles_y - 1; j>=0; j--){
+                for(j=tiles_y - 1; j>=0; j--){
                     tile_info[i][j+1] = tile_info[i][j];
                 }
             }
-            int j=0;
+            j++;
             for(int i=0; i<tiles_x; i++){
                 tile_info[i][j].index = rand() % (tiles->max_frame + 1);
                 tile_info[i][j].flip = get_flip(rand()%4);
