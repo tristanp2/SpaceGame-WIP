@@ -10,7 +10,7 @@
 #include "gameobject.h"
 #include "sprite.h"
 #include "effect.h"
-#include "starback.h"
+#include "background.h"
 
 using namespace std;
 
