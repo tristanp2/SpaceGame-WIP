@@ -10,7 +10,7 @@
 #include "gameobject.h"
 #include "sprite.h"
 #include "effect.h"
-#include "background.h"
+#include "starback.h"
 
 using namespace std;
 
@@ -30,12 +30,10 @@ public:
     GameCanvas(){
         srand(time(NULL));
         load_resources();
-        object_list.push_back(GameObject(enum_player, player_sprite, 2,Vector2d(400,300),false,Vector2d(0,0),180,0,100,true));
+        object_list.push_back(GameObject(enum_player, player_sprite, 2,Vector2d(400,300),false,Vector2d(0,0),270,0,100,true));
         player = &object_list.front();
-        background = BackGround(back_tile,true,CANVAS_WIDTH,CANVAS_HEIGHT);
     }
     ~GameCanvas(){
-        background.tile_info_print();
     }
             
     void load_resources(){
@@ -49,6 +47,7 @@ public:
 
     GameState frame_loop(SDL_Renderer* r, SDL_Window* window){
         init_game();
+        background = BackGround(SDL_GetWindowSurface(window)->format, CANVAS_WIDTH, CANVAS_HEIGHT, r);
         unsigned int last_frame = SDL_GetTicks();
         unsigned int frame_t = 0;
         refire = 0;
@@ -89,7 +88,7 @@ public:
     }
     void draw_objects(SDL_Renderer *r, SDL_Window *w){
         SDL_RenderClear(r);
-        background.draw(r);
+        background.draw();
         list<GameObject>::iterator it=object_list.begin();
         ++it; //skip past player. need to draw on top of bullets
         for(; it!=object_list.end(); ++it){
@@ -129,8 +128,6 @@ public:
         }
     }
     void handle_collision(GameObject obj1, GameObject obj2){
-        int new_scale, num_objects;
-        Vector2d old_pos;
     }
         
 private:
