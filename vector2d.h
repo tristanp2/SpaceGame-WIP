@@ -80,7 +80,7 @@ public:
 		return x*other.x + y*other.y;
 	}
     Vector2d unit_vector(){
-        float mag=sqrt(x*x+y*y);
+        float mag = length();
         return Vector2d(x/mag,y/mag);
     }
 	

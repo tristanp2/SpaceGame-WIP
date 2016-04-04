@@ -168,7 +168,7 @@ private:
     //Move to a ship class at some point
     void fire_bullet(){
         GameObject obj(enum_bullet,bullet,2,player->pos + player->direction*17,
-                true,350*player->direction,player->rotation,0,100,false);
+                true, 350*player->direction + player->velocity,player->rotation,0,100,false);
         object_list.push_back(obj); 
         refire=0;
     }
@@ -181,7 +181,7 @@ int main(){
     SDL_Renderer* renderer=SDL_CreateRenderer(window,-1,0);
 
     SDL_SetRenderDrawColor(renderer,0,0,0,0);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
     
