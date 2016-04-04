@@ -40,9 +40,11 @@ public:
         draw_rect.y = -draw_rect.h - delta.y;
         if(draw_rect.x > 0 or draw_rect.x < -2*draw_rect.w){
             draw_rect.x = -draw_rect.w + draw_rect.x % draw_rect.w;
+            last_x = offset_x;
         }
         if(draw_rect.y > 0 or draw_rect.y < -2*draw_rect.h){
             draw_rect.y = -draw_rect.h + draw_rect.y % draw_rect.h;
+            last_y = offset_y;
         }
     }
     void draw(){
@@ -52,7 +54,7 @@ public:
         for(int i=0; i<tile_x; draw_rect.x+=draw_rect.w, i++){
             draw_rect.y = start_y;
             for(int j=0; j<tile_y; draw_rect.y+=draw_rect.h, j++){
-                SDL_RenderCopyEx(r, starfield[i].get_texture(), NULL, &draw_rect, 0, NULL, SDL_FLIP_NONE);
+                SDL_RenderCopyEx(r, starfield->get_texture(), NULL, &draw_rect, 0, NULL, SDL_FLIP_NONE);
             }
         }
         draw_rect.x = start_x;
@@ -69,12 +71,7 @@ private:
     int tile_x, tile_y;
 
     void generate_background(){
-        starfield = new StarField[tile_x*tile_y];
-        for(int i=0; i<tile_x; i++){
-            for(int j=0; j<tile_y; j++){
-                starfield[i + j*tile_x].make_starfield(r, pixel_format, draw_rect.w, draw_rect.h);
-            }
-        }
+        starfield = new StarField(r, pixel_format, draw_rect.w, draw_rect.h);
     }
 };
 #endif

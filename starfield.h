@@ -14,21 +14,27 @@ public:
     StarField(SDL_Renderer* r, SDL_PixelFormat* pixel_format, int width, int height){
         make_starfield(r, pixel_format, width, height);
     }
-    void make_starfield(SDL_Renderer* r, SDL_PixelFormat* pixel_format, int width, int height){
+    void make_starfield(SDL_Renderer* r, SDL_PixelFormat* pixel_format, int width, int height, int min_dist = -1, int max_dist = -1){
         this->width = width;
         this->height = height;
         this->pixel_format = pixel_format;
         tex = SDL_CreateTexture(r, pixel_format->format, SDL_TEXTUREACCESS_STREAMING, width, height);
-        lock_texture();
+        if(max_dist < 0)    this->max_dist = width;
+        if(min_dist < 0)    this->min_dist = this->max_dist/2;
+        if(!lock_texture()){    //  was getting some odd situations where the created texture
+            unlock_texture();   //was already locked, resulting in segfault during starfield
+            lock_texture();     //generation. this seems to fix it
+        }
         pixel_count = pitch/4 * height;
         generate_texture();
         unlock_texture();
+        
     }
     SDL_Texture* get_texture(){
         return tex;
     }
 private:
-    int width, height, pitch, pixel_count;
+    int width, height, pitch, pixel_count, max_dist, min_dist;
     Uint32* pixels;
     SDL_PixelFormat* pixel_format;
     SDL_Texture* tex;
@@ -63,22 +69,17 @@ private:
     void generate_texture(){
         Uint32 star_colour = SDL_MapRGB(pixel_format, 0xff, 0xff, 0xff);
         Uint32 space_colour = SDL_MapRGB(pixel_format, 0, 0, 0);
-        int max_dist = width/4;
-        int min_dist = 100;
         int dist;
         max_dist -= min_dist;
         for(int i=0; i<pixel_count; i++){
             dist = rand()%max_dist + min_dist;
-            while(dist>=0 and i<pixel_count - 1){
+            do{
                 pixels[i++] = space_colour;
                 dist--;
-            }
+            }while(dist>0 and i < pixel_count - 1);
             pixels[i] = star_colour;
         }
         cout<<space_colour<<endl;
-        for(int i=0;i<pixel_count; i++){
-           // cout<<hex<<pixels[i]<<endl;
-        }
 
     }
 };
