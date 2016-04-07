@@ -94,7 +94,7 @@ private:
                     pixels[i] = star_colour;
                     pixels[i-1] = star_colour;
                     pixels[i+1] = star_colour;
-                    pixels[i - row_width] = star_colour;
+                    pixels[i - row_width] = star_colour; //pixel above i
                     pixels[i + row_width] = star_colour;
                 }
                 dist = rand()%(max_dist*4) + min_dist*4;

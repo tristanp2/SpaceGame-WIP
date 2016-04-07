@@ -39,7 +39,6 @@ public:
     void render(){
         if(!is_dead()){
             SDL_RenderCopy(r, tex, NULL, &draw_rect); 
-            cout<<"drawing at: "<<draw_rect.x<<","<<draw_rect.y<<endl;
         }
     }
     bool is_dead(){
@@ -47,6 +46,7 @@ public:
         return false;
     }
     void update(int delta_ms){
+        if(is_dead()) return;
         double delta_s = delta_ms / 1000.0;
         draw_rect.x += velocity.x * delta_s;
         draw_rect.y += velocity.y * delta_s;
@@ -54,11 +54,12 @@ public:
         if(elapsed > frame_t){
             elapsed = 0;
             frame++;
-            set_alpha(255.0 - 255.0*frame/max_frame);
+            int new_alpha = 255 - 255*frame/(double)max_frame;
+            set_alpha(new_alpha);
         }
     }
     void set_alpha(Uint8 alpha){
-        SDL_SetTextureAlphaMod(tex, alpha);
+//        SDL_SetTextureAlphaMod(tex, alpha);
     }
 private:
     SDL_Texture* tex;
@@ -98,7 +99,7 @@ public:
             else{
                 it = particle_list.erase(it);
                 frame = rand() % (sprite_sheet->max_frame + 1);
-                new_velocity = -1*direction*(rand() % (int)(velocity.length()/4 + 1)) + velocity;
+                new_velocity = direction*(rand() % (int)(velocity.length()/4 + 1)) + velocity;
                 particle_list.push_front(FadeParticle((*sprite_sheet)[frame], r, pos.x, pos.y, new_velocity, 10, 100));
             }
         }

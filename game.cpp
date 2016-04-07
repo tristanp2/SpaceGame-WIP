@@ -94,7 +94,9 @@ public:
     void draw_objects(SDL_Renderer *r, SDL_Window *w){
         SDL_RenderClear(r);
         background.draw();
-        if(particles_active) generator.draw();
+        if(particles_active){
+            generator.draw();
+        }
         list<GameObject>::iterator it=object_list.begin();
         ++it; //skip past player. need to draw on top of bullets
         for(; it!=object_list.end(); ++it){
@@ -114,7 +116,7 @@ public:
             (*it).update(delta_ms);
         }
         background.update(screen_offset.x, screen_offset.y);
-        if(particles_active) generator.update(delta_ms, player->velocity,player->direction, Point(player->pos.x - player->direction.x*8, player->pos.y - player->direction.y*8));
+        generator.update(delta_ms, player->velocity,player->direction, Point(player->pos.x - player->direction.x*8, player->pos.y - player->direction.y*8));
     }
     //Delete the objects that have gone out of the screen
     void delete_objects(){
