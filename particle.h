@@ -45,11 +45,11 @@ public:
         if(frame > max_frame)   return true;
         return false;
     }
-    void update(int delta_ms){
+    void update(int delta_ms, Vector2d offset){
         if(is_dead()) return;
         double delta_s = delta_ms / 1000.0;
-        draw_rect.x += velocity.x * delta_s;
-        draw_rect.y += velocity.y * delta_s;
+        draw_rect.x += velocity.x*delta_s - offset.x;
+        draw_rect.y += velocity.y*delta_s - offset.x;
         elapsed += delta_ms;
         if(elapsed > frame_t){
             elapsed = 0;
@@ -85,21 +85,21 @@ public:
         for(int i=0; i < max_particles; i++){
             frame = rand() % (sprite->max_frame + 1);
             new_velocity = -1*direction*(rand()%(int)(velocity.length()/4 + 1)) + velocity;
-            particle_list.push_back(FadeParticle((*sprite_sheet)[frame], r, pos.x, pos.y, new_velocity, 10, 100));
+            particle_list.push_back(FadeParticle((*sprite_sheet)[frame], r, pos.x, pos.y, new_velocity, 10, ms_per_frame));
         }
     }
-    void update(int delta_ms, Vector2d velocity, Vector2d direction, Point pos){
+    void update(int delta_ms, Vector2d velocity, Vector2d direction, Point pos, Vector2d offset){
         list<FadeParticle>::iterator it;
         pos = pos;
         Vector2d new_velocity;
         int frame;
         for(it = particle_list.begin(); it != particle_list.end(); ++it){
             if(!it->is_dead())
-                it->update(delta_ms);
+                it->update(delta_ms, offset);
             else{
                 it = particle_list.erase(it);
                 frame = rand() % (sprite_sheet->max_frame + 1);
-                new_velocity = direction*(rand() % (int)(velocity.length()/4 + 1)) + velocity;
+                new_velocity = -1*direction*(rand() % (int)(velocity.length()/4 + 1)) + velocity;
                 particle_list.push_front(FadeParticle((*sprite_sheet)[frame], r, pos.x, pos.y, new_velocity, 10, 100));
             }
         }

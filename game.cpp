@@ -116,7 +116,7 @@ public:
             (*it).update(delta_ms);
         }
         background.update(screen_offset.x, screen_offset.y);
-        generator.update(delta_ms, player->velocity,player->direction, Point(player->pos.x - player->direction.x*8, player->pos.y - player->direction.y*8));
+        generator.update(delta_ms, player->velocity,player->direction, Point(player->pos.x - player->direction.x*8, player->pos.y - player->direction.y*8), screen_offset);
     }
     //Delete the objects that have gone out of the screen
     void delete_objects(){
