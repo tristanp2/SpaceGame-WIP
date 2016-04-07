@@ -86,15 +86,16 @@ private:
             }while(dist>0 and i < pixel_count - 1);
             pixels[i] = star_colour;
         }
+        int row_width = pitch/4;
         dist = rand()%(max_dist*4) + min_dist*4;
-        for(int i = pitch*10; i < pixel_count - pitch*10; i++){ //will only draw larger stars 10 pixels away from boundaries
+        for(int i = row_width*10; i < pixel_count - row_width*10; i++){ //will only draw larger stars 10 pixels away from boundaries
             if(dist < 0){
-                if(i%pitch > 10 and pitch - i%pitch > 10){ 
+                if(i%row_width > 10 and row_width - i%row_width > 10){ 
                     pixels[i] = star_colour;
                     pixels[i-1] = star_colour;
                     pixels[i+1] = star_colour;
-                    pixels[i - pitch] = star_colour;
-                    pixels[i + pitch] = star_colour;
+                    pixels[i - row_width] = star_colour;
+                    pixels[i + row_width] = star_colour;
                 }
                 dist = rand()%(max_dist*4) + min_dist*4;
             }
