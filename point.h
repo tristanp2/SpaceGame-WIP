@@ -1,3 +1,5 @@
+#ifndef POINT_H
+#define POINT_H
 #include <SDL2/SDL.h>
 #include <iostream>
 
@@ -26,3 +28,4 @@ public:
 		 return s;
 	}
 };
+#endif

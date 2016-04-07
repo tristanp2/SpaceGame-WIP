@@ -90,7 +90,7 @@ public:
     SDL_Surface* operator [] (int i){
         return set_frame(i);
     }
-    int get_frame(){
+    int get_frame_number(){
         return this->current_frame;
     }
 private:

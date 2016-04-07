@@ -1,5 +1,5 @@
-#ifndef STARBACK_H
-#define STARBACK_H
+#ifndef BACKGROUND_H
+#define BACKGROUND_H
 
 #include <SDL2/SDL.h>
 #include <cstdlib>
@@ -37,10 +37,12 @@ public:
     void update(int x, int y){
         offset_x = x;
         offset_y = y;
+
         delta_front.x = offset_x - last_x;
         delta_front.y = offset_y - last_y;
         delta_back.x = offset_x/2 - last_px;
         delta_back.y = offset_y/2 - last_py;
+
         front_rect.x = -front_rect.w - delta_front.x;
         front_rect.y = -front_rect.h - delta_front.y;
         para_rect.x = -para_rect.w - delta_back.x;

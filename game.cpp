@@ -8,6 +8,7 @@
 #include "point.h"
 #include "enumeration.h"
 #include "gameobject.h"
+#include "particle.h"
 #include "sprite.h"
 #include "effect.h"
 #include "background.h"
@@ -22,15 +23,16 @@ public:
     static const int CANVAS_WIDTH=800;
     static const int CANVAS_HEIGHT=600;
     GameObject* player;
-    Sprite *player_sprite, *back_tile, *bullet;
+    Sprite *player_sprite, *back_tile, *bullet, *particles;
     list<GameObject> object_list;
     list<Effect> effect_list;
     Vector2d screen_offset;
     BackGround background;
+    ParticleGenerator generator;
     GameCanvas(){
         srand(time(NULL));
         load_resources();
-        object_list.push_back(GameObject(enum_player, player_sprite, 2,Vector2d(400,300),false,Vector2d(0,0),270,0,100,true));
+        object_list.push_back(GameObject(enum_player, player_sprite, 2, Vector2d(400,300), false, Vector2d(0,0), 270,0,100, true));
         player = &object_list.front();
     }
     ~GameCanvas(){
@@ -40,6 +42,7 @@ public:
         player_sprite = new Sprite("./resources/spaceship.bmp",2,3,1);
         back_tile = new Sprite("./resources/backtile.bmp",7,8,1);
         bullet = new Sprite("./resources/bullet.bmp",5,6,1);
+        particles = new Sprite("./resources/particles.bmp",3,4,1);
     }
 
     void init_game(){
@@ -48,15 +51,16 @@ public:
     GameState frame_loop(SDL_Renderer* r, SDL_Window* window){
         init_game();
         background = BackGround(SDL_GetWindowSurface(window)->format, CANVAS_WIDTH, CANVAS_HEIGHT, r);
+        generator = ParticleGenerator(particles,Vector2d(0,0),Vector2d(0,0),Point(400,300), 100, 20, r);
         unsigned int last_frame = SDL_GetTicks();
         unsigned int frame_t = 0;
         refire = 0;
         firing = false;
         while(1){
-            unsigned int current_frame=SDL_GetTicks();
-            unsigned int delta_t=current_frame - last_frame;
-            refire+=delta_t;
-            frame_t+=delta_t;
+            unsigned int current_frame = SDL_GetTicks();
+            unsigned int delta_t = current_frame - last_frame;
+            refire += delta_t;
+            frame_t += delta_t;
             if(firing and refire>fire_rate) fire_bullet();
 
             update_objects(delta_t);
@@ -89,6 +93,7 @@ public:
     void draw_objects(SDL_Renderer *r, SDL_Window *w){
         SDL_RenderClear(r);
         background.draw();
+        generator.draw();
         list<GameObject>::iterator it=object_list.begin();
         ++it; //skip past player. need to draw on top of bullets
         for(; it!=object_list.end(); ++it){
@@ -101,6 +106,7 @@ public:
         SDL_RenderPresent(r);
     }
     void update_objects(int delta_ms){
+        generator.update(delta_ms, player->velocity,player->direction, Point(player->pos.x - player->direction.x*8, player->pos.y - player->direction.y*8));
         for(list<GameObject>::iterator it=object_list.begin(); it!=object_list.end(); ++it){
             (*it).update(delta_ms, screen_offset);
         }
