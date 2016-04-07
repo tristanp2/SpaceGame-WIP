@@ -50,7 +50,8 @@ public:
 
     GameState frame_loop(SDL_Renderer* r, SDL_Window* window){
         init_game();
-        background = BackGround(SDL_GetWindowSurface(window)->format, CANVAS_WIDTH, CANVAS_HEIGHT, r);
+        particles_active = false;
+        background = BackGround(SDL_GetWindowPixelFormat(window), CANVAS_WIDTH, CANVAS_HEIGHT, r);
         generator = ParticleGenerator(particles,Vector2d(0,0),Vector2d(0,0),Point(400,300), 100, 20, r);
         unsigned int last_frame = SDL_GetTicks();
         unsigned int frame_t = 0;
@@ -93,7 +94,7 @@ public:
     void draw_objects(SDL_Renderer *r, SDL_Window *w){
         SDL_RenderClear(r);
         background.draw();
-        generator.draw();
+        if(particles_active) generator.draw();
         list<GameObject>::iterator it=object_list.begin();
         ++it; //skip past player. need to draw on top of bullets
         for(; it!=object_list.end(); ++it){
@@ -106,7 +107,6 @@ public:
         SDL_RenderPresent(r);
     }
     void update_objects(int delta_ms){
-        generator.update(delta_ms, player->velocity,player->direction, Point(player->pos.x - player->direction.x*8, player->pos.y - player->direction.y*8));
         for(list<GameObject>::iterator it=object_list.begin(); it!=object_list.end(); ++it){
             (*it).update(delta_ms, screen_offset);
         }
@@ -114,6 +114,7 @@ public:
             (*it).update(delta_ms);
         }
         background.update(screen_offset.x, screen_offset.y);
+        if(particles_active) generator.update(delta_ms, player->velocity,player->direction, Point(player->pos.x - player->direction.x*8, player->pos.y - player->direction.y*8));
     }
     //Delete the objects that have gone out of the screen
     void delete_objects(){
@@ -137,21 +138,22 @@ public:
     }
         
 private:
-    bool firing;
+    bool firing, particles_active;
     int refire;
     static const int fire_rate=200;    //ms/bullet
     void handle_key_down(SDL_Keycode key){
         if(key == SDLK_RIGHT){
-            player->raccel=360;
+            player->raccel = 360;
         }
         else if(key == SDLK_LEFT){
-            player->raccel=-360;
+            player->raccel = -360;
         }
         else if(key == SDLK_SPACE){
             firing=true; 
         }
         else if(key == SDLK_LSHIFT){
-            player->animated=true;
+            player->animated = true;
+            particles_active = true;
             player->accel=60;
         }
     }
@@ -168,6 +170,7 @@ private:
         else if(key == SDLK_LSHIFT){
             player->accel=0;
             player->animated=false;
+            particles_active = false;
             player->set_frame(0);
         }
     }

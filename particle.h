@@ -37,7 +37,10 @@ public:
     }
 
     void render(){
-        if(!is_dead())  SDL_RenderCopy(r, tex, NULL, &draw_rect); 
+        if(!is_dead()){
+            SDL_RenderCopy(r, tex, NULL, &draw_rect); 
+            cout<<"drawing at: "<<draw_rect.x<<","<<draw_rect.y<<endl;
+        }
     }
     bool is_dead(){
         if(frame > max_frame)   return true;

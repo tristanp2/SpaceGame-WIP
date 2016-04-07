@@ -10,7 +10,7 @@ public:
     BackGround(){
         scale_surf = NULL;
     }
-    BackGround(SDL_PixelFormat* pixel_format, unsigned int width, unsigned int height, SDL_Renderer *r){
+    BackGround(Uint32 pixel_format, unsigned int width, unsigned int height, SDL_Renderer *r){
         this->pixel_format = pixel_format;
         front_rect.h = height;
         front_rect.w = width;
@@ -85,8 +85,8 @@ public:
         para_rect.y = para_y;
     } 
 private:
-    SDL_PixelFormat* pixel_format;
     Point delta_front, delta_back;
+    Uint32 pixel_format;
     StarField *starfield, *parallax;
     SDL_Surface *scale_surf;
     SDL_Renderer* r;
