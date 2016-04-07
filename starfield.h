@@ -73,7 +73,7 @@ private:
         return true;
     }
     void generate_texture(){
-        Uint32 star_colour = 0xffffffff;
+        Uint32 star_colour = 0xffffffff;    //pixel format can mostly be ignored here since rgba values are the same for each colour
         Uint32 space_colour = 0;
         int dist;
         max_dist -= min_dist;
@@ -86,8 +86,20 @@ private:
             }while(dist>0 and i < pixel_count - 1);
             pixels[i] = star_colour;
         }
-        cout<<space_colour<<endl;
-
+        dist = rand()%(max_dist*4) + min_dist*4;
+        for(int i = pitch*10; i < pixel_count - pitch*10; i++){ //will only draw larger stars 10 pixels away from boundaries
+            if(dist < 0){
+                if(i%pitch > 10 and pitch - i%pitch > 10){ 
+                    pixels[i] = star_colour;
+                    pixels[i-1] = star_colour;
+                    pixels[i+1] = star_colour;
+                    pixels[i - pitch] = star_colour;
+                    pixels[i + pitch] = star_colour;
+                }
+                dist = rand()%(max_dist*4) + min_dist*4;
+            }
+            else dist--;
+        }
     }
 };
 #endif
