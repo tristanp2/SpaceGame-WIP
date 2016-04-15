@@ -25,8 +25,8 @@ public:
     static const int CANVAS_WIDTH=800;
     static const int CANVAS_HEIGHT=600;
     GameObject* player;
-    Sprite *player_sprite, *back_tile, *bullet, *particles;
-    char* buffer;
+    Sprite *player_sprite, *back_tile, *bullet, *particles, *explosion, *asteroid;
+    char *buffer, *score;
     list<GameObject> object_list;
     list<Effect> effect_list;
     Vector2d screen_offset;
@@ -43,8 +43,10 @@ public:
             
     void load_resources(){
         player_sprite = new Sprite("./resources/spaceship.bmp",2,3,1);
+        asteroid = new Sprite("./resources/asteroid.bmp", 0,1,1);
         back_tile = new Sprite("./resources/backtile.bmp",7,8,1);
         bullet = new Sprite("./resources/bullet.bmp",5,6,1);
+        explosion = new Sprite("./resources/explosion.bmp", 6,7,1);
         particles = new Sprite("./resources/particles.bmp",5,6,1);
     }
     void init_game(){
@@ -56,7 +58,9 @@ public:
         generator = ParticleGenerator(particles,Vector2d(0,0),Vector2d(0,0),Point(400,300), 500, 50, r);
         unsigned int last_frame = SDL_GetTicks();
         unsigned int frame_t = 0;
+        int delta_spawn = 0;
         buffer = new char[80];
+        score = new char[40];
         refire = 0;
         firing = false;
         while(1){
@@ -64,6 +68,7 @@ public:
             unsigned int delta_t = current_frame - last_frame;
             refire += delta_t;
             frame_t += delta_t;
+            delta_spawn += delta_t;
             if(firing and refire>fire_rate) fire_bullet();
 
             update_objects(delta_t);
@@ -74,7 +79,8 @@ public:
                 frame_t=0;
             }
             delete_objects();
-            //check_collisions();
+            delta_spawn = spawn_objects(delta_spawn);
+            check_collisions();
             SDL_Event e;
             while(SDL_PollEvent(&e)){
                 switch(e.type){
@@ -90,7 +96,8 @@ public:
                         break;
                 }
             }
-            for(int i=0; i<80;i++) buffer[i] = 0;
+            spawn_rate = (abs(screen_offset.x) + abs(screen_offset.y)) / 300;
+            sprintf(score, "SpawnRate: %d", spawn_rate);
             sprintf(buffer, "Num_Objects: %d", (int)object_list.size());
             last_frame=current_frame;
         }
@@ -108,7 +115,8 @@ public:
         for(list<Effect>::iterator e_it=effect_list.begin(); e_it!=effect_list.end(); ++e_it){
             (*e_it).draw(r, w);
         }
-        stringRGBA(r, 100,100, buffer, 255, 255, 255, 255);
+        stringRGBA(r, 10,10, buffer, 255, 255, 255, 255);
+        stringRGBA(r, 10,50, score, 255, 255, 255, 255);
         SDL_RenderPresent(r);
     }
     void update_objects(int delta_ms){
@@ -120,6 +128,26 @@ public:
         }
         background.update(screen_offset.x, screen_offset.y);
         generator.update(delta_ms, player->velocity,player->direction, Point(player->pos.x, player->pos.y), screen_offset, particles_active);
+    }
+    int spawn_objects(int dt){
+        if(dt>respawn){
+            GameObject obj;
+            int rv=rand()%121+20;
+            int sidex=rand()%2;
+            int x=-100*sidex + 900*abs(sidex-1); //x coord for asteroid spawn. either spawns at -100 or +900 (100 pixels outside of the screen)
+            int y=rand()%600;   //y coord for asteroid spawn
+            Vector2d pos(x,y);
+            Vector2d end_point(300,rand()%400+100); //Get some random point from center x of screen so
+                                                    //to set up vector for asteroid direction
+            Vector2d dir = end_point - pos;
+            dir=dir.unit_vector();
+            obj=GameObject(enum_asteroid,asteroid,rand()%3 + 1,pos,true,rv*dir,0,rand()%180 - 360,0,false);
+            object_list.push_back(obj);
+            respawn = 500 + rand()%5000/spawn_rate; 
+            return 0;
+        }    
+        else return dt;
+        return 0;   //Only to stop compiler from complaining
     }
     //Delete the objects that have gone out of the screen
     void delete_objects(){
@@ -147,11 +175,56 @@ public:
         }
     }
     void handle_collision(GameObject obj1, GameObject obj2){
+        int new_scale, num_objects = 0;
+        Vector2d old_pos;
+        if(obj1.type==enum_asteroid and obj2.type==enum_asteroid){
+            if(obj1.scale < obj2.scale){
+                new_scale = obj2.scale - 1;   
+                old_pos = obj2.pos;
+            }
+            else{
+                new_scale = obj1.scale - 1;
+                old_pos = obj1.pos;
+            }
+            num_objects = obj2.scale + obj1.scale - 1;
+        }        
+        else if(obj1.type==enum_bullet or obj2.type==enum_bullet){ //At the moment it should be impossible for two bullets to collide
+            GameObject other;
+            if(obj1.type==enum_bullet){
+                other=obj2;
+            }
+            else{
+                other=obj1;
+            }
+            new_scale = other.scale - 1;
+            num_objects = new_scale + 1;
+            old_pos = other.pos;
+        }
+        else if(obj1.type == enum_player or obj2.type == enum_player){
+            if(obj1.type != enum_bullet and obj2.type!=enum_bullet){ //bullets spawn in the player's hitbox
+                effect_list.push_front(Effect(explosion, 100, false, 3, player->pos));
+                dead = true;
+            }
+            return;
+        }            
+
+        GameObject new_obj;
+        Vector2d new_dir, new_pos;
+        double angle_rad;
+        int angle_deg;
+        for(int i=0; i<num_objects; i++){
+            angle_deg = (i*360/num_objects + rand()%45)%360;
+            angle_rad = angle_deg*M_PI/180;
+            new_dir = Vector2d(cos(angle_rad),sin(angle_rad));
+            new_pos = new_scale*15*new_dir + old_pos;
+            object_list.push_back(GameObject(enum_asteroid,asteroid,new_scale,new_pos,false,(rand()%121 + 20)*new_dir,angle_deg,rand()%180 -360,0,false));
+        }
+        effect_list.push_back(Effect(explosion, 100, false, new_scale + 1, old_pos));
     }
         
 private:
-    bool firing, particles_active;
-    int refire;
+    bool firing, particles_active, dead;
+    int refire, spawn_rate, respawn;
     static const int fire_rate=200;    //ms/bullet
     void handle_key_down(SDL_Keycode key){
         if(key == SDLK_RIGHT){

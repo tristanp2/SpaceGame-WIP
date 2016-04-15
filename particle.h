@@ -103,13 +103,13 @@ public:
         this->max_lifetime = max_lifetime;
         this->r = r;
         buffer = new char[80];
+        printf("gen: %x\n",buffer);
     }
     ~ParticleGenerator(){
         delete[] buffer;    //This should be fine because the copy constructor won't be used
     }
     void update(int delta_ms, Vector2d velocity, Vector2d direction, Point pos, Vector2d offset, bool generate){
         list<FadeParticle>::iterator it;
-        sprintf(buffer, "%d , %d",pos.x, pos.y);
         if(particle_list.size() < max_particles and generate){
             generate_particles(pos, velocity, direction);
         }
