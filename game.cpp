@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <list>
 #include <SDL2/SDL.h>
@@ -25,6 +26,7 @@ public:
     static const int CANVAS_HEIGHT=600;
     GameObject* player;
     Sprite *player_sprite, *back_tile, *bullet, *particles;
+    char* buffer;
     list<GameObject> object_list;
     list<Effect> effect_list;
     Vector2d screen_offset;
@@ -45,17 +47,17 @@ public:
         bullet = new Sprite("./resources/bullet.bmp",5,6,1);
         particles = new Sprite("./resources/particles.bmp",3,4,1);
     }
-
     void init_game(){
     }
-
     GameState frame_loop(SDL_Renderer* r, SDL_Window* window){
+
         init_game();
         particles_active = false;
         background = BackGround(SDL_GetWindowPixelFormat(window), CANVAS_WIDTH, CANVAS_HEIGHT, r);
-        generator = ParticleGenerator(particles,Vector2d(0,0),Vector2d(0,0),Point(400,300), 100, 20, r);
+        generator = ParticleGenerator(particles,Vector2d(0,0),Vector2d(0,0),Point(400,300), 100, 1, r);
         unsigned int last_frame = SDL_GetTicks();
         unsigned int frame_t = 0;
+        buffer = new char[80];
         refire = 0;
         firing = false;
         while(1){
@@ -89,15 +91,14 @@ public:
                         break;
                 }
             }
+            sprintf(buffer, "%d , %d", (int)screen_offset.x, (int)screen_offset.y);
             last_frame=current_frame;
         }
     }
     void draw_objects(SDL_Renderer *r, SDL_Window *w){
         SDL_RenderClear(r);
         background.draw();
-        if(particles_active){
-            generator.draw();
-        }
+        generator.draw();
         list<GameObject>::iterator it=object_list.begin();
         ++it; //skip past player. need to draw on top of bullets
         for(; it!=object_list.end(); ++it){
@@ -107,6 +108,7 @@ public:
         for(list<Effect>::iterator e_it=effect_list.begin(); e_it!=effect_list.end(); ++e_it){
             (*e_it).draw(r, w);
         }
+      stringRGBA(r, 10,50, buffer, 255, 255, 255, 255);
         SDL_RenderPresent(r);
     }
     void update_objects(int delta_ms){
@@ -117,7 +119,7 @@ public:
             (*it).update(delta_ms);
         }
         background.update(screen_offset.x, screen_offset.y);
-        generator.update(delta_ms, player->velocity,player->direction, Point(player->pos.x - player->direction.x*8, player->pos.y - player->direction.y*8), screen_offset);
+        generator.update(delta_ms, player->velocity,player->direction, Point(player->pos.x, player->pos.y), screen_offset, particles_active);
     }
     //Delete the objects that have gone out of the screen
     void delete_objects(){
