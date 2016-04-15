@@ -69,8 +69,10 @@ public:
         }
         scale_surf = NULL;
     }
-    void update(int delta_ms){
+    void update(int delta_ms, Vector2d offset){
         delta_t += delta_ms;
+        draw_rect.x = pos.x - draw_rect.w/2 - offset.x;
+        draw_rect.y = pos.y - draw_rect.h/2 - offset.y;
         if(delta_t >= ms_per_frame){
             delta_t = 0;
             sprite->set_frame(current_frame++);

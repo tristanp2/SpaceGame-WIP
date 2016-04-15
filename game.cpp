@@ -17,15 +17,15 @@
 
 using namespace std;
 
-static const int WINDOW_WIDTH=800;
-static const int WINDOW_HEIGHT=600;
+static const int WINDOW_WIDTH=1200;
+static const int WINDOW_HEIGHT=900;
 
 class GameCanvas{
 public:
-    static const int CANVAS_WIDTH=800;
-    static const int CANVAS_HEIGHT=600;
+    static const int CANVAS_WIDTH=1200;
+    static const int CANVAS_HEIGHT=900;
     GameObject* player;
-    Sprite *player_sprite, *back_tile, *bullet, *particles, *explosion, *asteroid;
+    Sprite *player_sprite, *back_tile, *bullet, *start, *quit, *particles, *explosion, *asteroid;
     char *buffer, *score;
     list<GameObject> object_list;
     list<Effect> effect_list;
@@ -35,30 +35,77 @@ public:
     GameCanvas(){
         srand(time(NULL));
         load_resources();
-        object_list.push_back(GameObject(enum_player, player_sprite, 2, Vector2d(400,300), false, Vector2d(0,0), 270,0,100, true));
-        player = &object_list.front();
     }
     ~GameCanvas(){
+    }
+    GameState show_menu(SDL_Renderer* r, SDL_Window* window){
+        object_list.clear();
+        GameObject* button[2];
+        object_list.push_back(GameObject(enum_misc, start, 2, Vector2d(CANVAS_WIDTH/2,CANVAS_HEIGHT/2), false, Vector2d(0,0), 0,0,0, false));
+        button[0] = &(object_list.front());
+        object_list.push_back(GameObject(enum_misc, quit, 2, Vector2d(CANVAS_WIDTH/2,CANVAS_HEIGHT/2 + 100), false, Vector2d(0,0), 0,0,0, false));
+        button[1] = &(object_list.back());
+        int index = 0;
+
+        while(1){
+            draw_objects(r,window);
+            button[index]->set_frame(1);
+            button[(index+1)%2]->set_frame(0);
+            SDL_Event e;
+            while(SDL_PollEvent(&e)){
+                SDL_Keycode key = e.key.keysym.sym;
+                switch(e.type){
+                    case(SDL_QUIT):
+                        return enum_quit;
+                    case(SDL_KEYDOWN):
+                        if(key == SDLK_RETURN){
+                            if(index==0){
+                                object_list.clear();
+                                return enum_play;
+                            }
+                            else{
+                                return enum_quit;
+                            }
+                        }
+                        if(key == SDLK_DOWN){
+                            index = abs(index + 1);
+                        }
+                        else if(key == SDLK_UP){
+                            index = abs(index - 1);
+                        }
+                        index %= 2;
+                        break;
+                    case(SDL_KEYUP):
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
             
     void load_resources(){
         player_sprite = new Sprite("./resources/spaceship.bmp",2,3,1);
         asteroid = new Sprite("./resources/asteroid.bmp", 0,1,1);
-        back_tile = new Sprite("./resources/backtile.bmp",7,8,1);
         bullet = new Sprite("./resources/bullet.bmp",5,6,1);
+        start = new Sprite("./resources/startbutton.bmp", 1,2,1);
+        quit = new Sprite("./resources/quitbutton.bmp", 1,2,1);
         explosion = new Sprite("./resources/explosion.bmp", 6,7,1);
         particles = new Sprite("./resources/particles.bmp",5,6,1);
     }
     void init_game(){
+        object_list.push_back(GameObject(enum_player, player_sprite, 2, Vector2d(CANVAS_WIDTH/2,CANVAS_HEIGHT/2), false, Vector2d(0,0), 270,0,100, true));
+        player = &object_list.front();
     }
     GameState frame_loop(SDL_Renderer* r, SDL_Window* window){
         init_game();
         particles_active = false;
         background = BackGround(SDL_GetWindowPixelFormat(window), CANVAS_WIDTH, CANVAS_HEIGHT, r);
-        generator = ParticleGenerator(particles,Vector2d(0,0),Vector2d(0,0),Point(400,300), 500, 50, r);
+        generator = ParticleGenerator(particles,Vector2d(0,0),Vector2d(0,0),Point(CANVAS_WIDTH/2,CANVAS_HEIGHT/2), 500, 50, r);
         unsigned int last_frame = SDL_GetTicks();
         unsigned int frame_t = 0;
         int delta_spawn = 0;
+        spawn_rate = 1;
         buffer = new char[80];
         score = new char[40];
         refire = 0;
@@ -72,9 +119,18 @@ public:
             if(firing and refire>fire_rate) fire_bullet();
 
             update_objects(delta_t);
-            screen_offset.x = player->pos.x - 400;    //using center as 0,0
-            screen_offset.y = player->pos.y - 300;
-            if(frame_t > 32){
+            if(dead){
+                sprintf(buffer,"Your score was: %dCongratulations, RoidMaster\n", spawn_rate*100);
+            }
+            if(dead and effect_list.front().done){
+                object_list.clear();
+                effect_list.clear();
+                dead = false;
+                return enum_dead;
+            }
+            screen_offset.x = player->pos.x - CANVAS_WIDTH/2;    //using center as 0,0
+            screen_offset.y = player->pos.y - CANVAS_HEIGHT/2;
+            if(frame_t > 17){
                 draw_objects(r,window);
                 frame_t=0;
             }
@@ -87,17 +143,19 @@ public:
                     case(SDL_QUIT):
                         return enum_quit;
                     case(SDL_KEYDOWN):
+                        if(dead) break;
                         handle_key_down(e.key.keysym.sym);
                         break;
                     case(SDL_KEYUP):
+                        if(dead) break;
                         handle_key_up(e.key.keysym.sym);
                         break;
                     default:
                         break;
                 }
             }
-            spawn_rate = (abs(screen_offset.x) + abs(screen_offset.y)) / 300;
-            sprintf(score, "SpawnRate: %d", spawn_rate);
+            spawn_rate = (abs(screen_offset.x) + abs(screen_offset.y)) / 300 + 1;
+            sprintf(score, "Speed: %d", (int)player->velocity.length());
             sprintf(buffer, "Num_Objects: %d", (int)object_list.size());
             last_frame=current_frame;
         }
@@ -111,7 +169,7 @@ public:
         for(; it!=object_list.end(); ++it){
             (*it).draw(r, w);
         }
-        object_list.front().draw(r, w);
+        if(!dead) object_list.front().draw(r, w);
         for(list<Effect>::iterator e_it=effect_list.begin(); e_it!=effect_list.end(); ++e_it){
             (*e_it).draw(r, w);
         }
@@ -124,7 +182,7 @@ public:
             (*it).update(delta_ms, screen_offset);
         }
         for(list<Effect>::iterator it=effect_list.begin(); it!=effect_list.end(); ++it){
-            (*it).update(delta_ms);
+            (*it).update(delta_ms, screen_offset);
         }
         background.update(screen_offset.x, screen_offset.y);
         generator.update(delta_ms, player->velocity,player->direction, Point(player->pos.x, player->pos.y), screen_offset, particles_active);
@@ -133,14 +191,42 @@ public:
         if(dt>respawn){
             GameObject obj;
             int rv=rand()%121+20;
-            int sidex=rand()%2;
-            int x=-100*sidex + 900*abs(sidex-1); //x coord for asteroid spawn. either spawns at -100 or +900 (100 pixels outside of the screen)
-            int y=rand()%600;   //y coord for asteroid spawn
+            int x, y, side = rand()%4;
+            Vector2d direction;
+            if(player->velocity.length() <= 200){
+                switch(side){
+                    case 0: //top
+                        x = CANVAS_WIDTH/2  - (rand()%CANVAS_WIDTH/4 - CANVAS_WIDTH/8);
+                        y = -CANVAS_HEIGHT/2 - (rand()%CANVAS_HEIGHT/4);
+                        break;
+                    case 1: //right
+                        x = CANVAS_WIDTH + CANVAS_WIDTH/2  + (rand()%CANVAS_WIDTH/4);
+                        y = CANVAS_HEIGHT/2 - (rand()%CANVAS_HEIGHT/4 - CANVAS_WIDTH/8);
+                        break;
+                    case 2: //bottom
+                        x = CANVAS_WIDTH/2  - (rand()%CANVAS_WIDTH/4 - CANVAS_WIDTH/8);
+                        y = CANVAS_HEIGHT + CANVAS_HEIGHT/2 - (rand()%CANVAS_HEIGHT/4);
+                        break;
+                    case 3: //left
+                        x = -CANVAS_WIDTH/2  - (rand()%CANVAS_WIDTH/4);
+                        y = -CANVAS_HEIGHT/2 - (rand()%CANVAS_HEIGHT/4 - CANVAS_HEIGHT/8);
+                        break;
+                }
+            }
+            else{
+                direction = player->velocity.unit_vector();
+                int dist = CANVAS_HEIGHT/2 + CANVAS_WIDTH/2;
+                x = direction.x*dist;
+                y = direction.y*dist;
+            }
             Vector2d pos(x,y);
-            Vector2d end_point(300,rand()%400+100); //Get some random point from center x of screen so
+//            cout<<"spawn_loc: "<<pos<<endl;
+            Vector2d end_point(CANVAS_WIDTH/2 + rand()%200 - 100,CANVAS_HEIGHT/2 + rand()%200 - 100); //Get some random point near center of screen 
                                                     //to set up vector for asteroid direction
             Vector2d dir = end_point - pos;
             dir=dir.unit_vector();
+//            cout<<"dir: "<<dir<<endl;
+            pos += screen_offset;
             obj=GameObject(enum_asteroid,asteroid,rand()%3 + 1,pos,true,rv*dir,0,rand()%180 - 360,0,false);
             object_list.push_back(obj);
             respawn = 500 + rand()%5000/spawn_rate; 
@@ -151,13 +237,17 @@ public:
     }
     //Delete the objects that have gone out of the screen
     void delete_objects(){
-       Point pos;
-       for(list<GameObject>::iterator it = object_list.begin(); it != object_list.end(); ++it){
+        Point pos;
+        for(list<GameObject>::iterator it = object_list.begin(); it != object_list.end(); ++it){
            pos = it->get_draw_coords();
            if(pos.x < -CANVAS_WIDTH or pos.x > CANVAS_WIDTH*2 or pos.y < -CANVAS_HEIGHT or pos.y > CANVAS_HEIGHT*2){
                it = object_list.erase(it);
            }
-       }
+        }
+        for(list<Effect>::iterator it=effect_list.begin(); it!=effect_list.end(); ++it){
+            if((*it).done)
+                it = effect_list.erase(it);
+        }
     }
     void check_collisions(){
         list<GameObject>::iterator it1,it2;
@@ -280,6 +370,23 @@ int main(){
     SDL_RenderPresent(renderer);
     
     GameCanvas canvas;
-    canvas.frame_loop(renderer, window);
+    GameState state=enum_menu;
+    while(1){
+        switch(state){
+            case enum_quit:
+                return 0;
+            case enum_play:
+                SDL_RenderClear(renderer);
+                SDL_RenderPresent(renderer);
+                state=canvas.frame_loop(renderer, window);
+                break;
+            case enum_dead:
+            default:
+                SDL_RenderClear(renderer);
+                SDL_RenderPresent(renderer);
+                state=canvas.show_menu(renderer,window);
+                break;
+        }
+    }
     return 0;
 }
