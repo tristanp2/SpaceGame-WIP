@@ -44,6 +44,7 @@ public:
         tex->ref_count++;
         draw_rect = other.draw_rect;
         velocity = other.velocity;
+        pos = other.pos;
         frame = other.frame;
         max_frame = other.max_frame;
         elapsed = other.elapsed;
@@ -62,7 +63,7 @@ public:
         if(is_dead()) return;
         double delta_s = delta_ms / 1000.0;
         pos = pos + velocity*delta_s;
-        draw_rect.x = (int)pos.x - (int)offset.x;
+        draw_rect.x = pos.x - offset.x;
         draw_rect.y = pos.y - offset.y;
         elapsed += delta_ms;
         if(elapsed > frame_t){
