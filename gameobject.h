@@ -217,6 +217,9 @@ public:
         delete[] other_point;
         return false;
     }
+    Point get_draw_coords(){
+        return Point(draw_rect.x, draw_rect.y);
+    }
     //This point is used only for rotations
     //pos is the real center of the sprite drawn on screen
     //NULL tells sdl to use default center

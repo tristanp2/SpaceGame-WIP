@@ -45,16 +45,15 @@ public:
         player_sprite = new Sprite("./resources/spaceship.bmp",2,3,1);
         back_tile = new Sprite("./resources/backtile.bmp",7,8,1);
         bullet = new Sprite("./resources/bullet.bmp",5,6,1);
-        particles = new Sprite("./resources/particles.bmp",3,4,1);
+        particles = new Sprite("./resources/particles.bmp",5,6,1);
     }
     void init_game(){
     }
     GameState frame_loop(SDL_Renderer* r, SDL_Window* window){
-
         init_game();
         particles_active = false;
         background = BackGround(SDL_GetWindowPixelFormat(window), CANVAS_WIDTH, CANVAS_HEIGHT, r);
-        generator = ParticleGenerator(particles,Vector2d(0,0),Vector2d(0,0),Point(400,300), 100, 1, r);
+        generator = ParticleGenerator(particles,Vector2d(0,0),Vector2d(0,0),Point(400,300), 500, 50, r);
         unsigned int last_frame = SDL_GetTicks();
         unsigned int frame_t = 0;
         buffer = new char[80];
@@ -91,7 +90,8 @@ public:
                         break;
                 }
             }
-            sprintf(buffer, "%d , %d", (int)screen_offset.x, (int)screen_offset.y);
+            for(int i=0; i<80;i++) buffer[i] = 0;
+            sprintf(buffer, "Num_Objects: %d", (int)object_list.size());
             last_frame=current_frame;
         }
     }
@@ -108,7 +108,7 @@ public:
         for(list<Effect>::iterator e_it=effect_list.begin(); e_it!=effect_list.end(); ++e_it){
             (*e_it).draw(r, w);
         }
-      stringRGBA(r, 10,50, buffer, 255, 255, 255, 255);
+        stringRGBA(r, 100,100, buffer, 255, 255, 255, 255);
         SDL_RenderPresent(r);
     }
     void update_objects(int delta_ms){
@@ -123,6 +123,13 @@ public:
     }
     //Delete the objects that have gone out of the screen
     void delete_objects(){
+       Point pos;
+       for(list<GameObject>::iterator it = object_list.begin(); it != object_list.end(); ++it){
+           pos = it->get_draw_coords();
+           if(pos.x < -CANVAS_WIDTH or pos.x > CANVAS_WIDTH*2 or pos.y < -CANVAS_HEIGHT or pos.y > CANVAS_HEIGHT*2){
+               it = object_list.erase(it);
+           }
+       }
     }
     void check_collisions(){
         list<GameObject>::iterator it1,it2;
