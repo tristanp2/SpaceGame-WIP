@@ -29,8 +29,8 @@ public:
         SDL_SetTextureAlphaMod(tex->get_tex(),255);
         draw_rect.w = surf->w;
         draw_rect.h = surf->h;
-        draw_rect.x = pos_x;
-        draw_rect.y = pos_y;
+        pos.x = pos_x;
+        pos.y = pos_y;
         this->velocity = velocity;
         frame = 0;
         buffer = new char[80];
