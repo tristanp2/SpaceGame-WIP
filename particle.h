@@ -103,7 +103,6 @@ public:
         this->max_lifetime = max_lifetime;
         this->r = r;
         buffer = new char[80];
-        printf("gen: %x\n",buffer);
     }
     ~ParticleGenerator(){
         delete[] buffer;    //This should be fine because the copy constructor won't be used

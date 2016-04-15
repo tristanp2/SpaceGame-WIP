@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <unistd.h>
 #include <list>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL2_gfxPrimitives.h>
@@ -30,16 +31,28 @@ public:
     list<GameObject> object_list;
     list<Effect> effect_list;
     Vector2d screen_offset;
+    Point ship_box[3], ast_box[7];
     BackGround background;
     ParticleGenerator generator;
     GameCanvas(){
         srand(time(NULL));
         load_resources();
+        ship_box[0] = Point(7,0);
+        ship_box[1] = Point(7,16);
+        ship_box[2] = Point(26,8);
+        ast_box[0] = Point(0,8);
+        ast_box[1] = Point(3,18);
+        ast_box[2] = Point(10,19);
+        ast_box[3] = Point(20,12);
+        ast_box[4] = Point(21,5);
+        ast_box[5] = Point(16,0);
+        ast_box[6] = Point(6,2);
     }
     ~GameCanvas(){
     }
     GameState show_menu(SDL_Renderer* r, SDL_Window* window){
         object_list.clear();
+        menu = true;
         GameObject* button[2];
         object_list.push_back(GameObject(enum_misc, start, 2, Vector2d(CANVAS_WIDTH/2,CANVAS_HEIGHT/2), false, Vector2d(0,0), 0,0,0, false));
         button[0] = &(object_list.front());
@@ -79,6 +92,8 @@ public:
                         break;
                     default:
                         break;
+        object_list.front().set_center(14,8);
+        object_list.front().make_hitbox(ship_box,3);
                 }
             }
         }
@@ -96,18 +111,21 @@ public:
     void init_game(){
         object_list.push_back(GameObject(enum_player, player_sprite, 2, Vector2d(CANVAS_WIDTH/2,CANVAS_HEIGHT/2), false, Vector2d(0,0), 270,0,100, true));
         player = &object_list.front();
+        object_list.front().make_hitbox(ship_box,3);
     }
     GameState frame_loop(SDL_Renderer* r, SDL_Window* window){
         init_game();
+        menu = false;
         particles_active = false;
         background = BackGround(SDL_GetWindowPixelFormat(window), CANVAS_WIDTH, CANVAS_HEIGHT, r);
         generator = ParticleGenerator(particles,Vector2d(0,0),Vector2d(0,0),Point(CANVAS_WIDTH/2,CANVAS_HEIGHT/2), 500, 50, r);
         unsigned int last_frame = SDL_GetTicks();
         unsigned int frame_t = 0;
         int delta_spawn = 0;
+        int death_timer = 3000;
         spawn_rate = 1;
+        screen_offset = Vector2d(0,0);
         buffer = new char[80];
-        score = new char[40];
         refire = 0;
         firing = false;
         while(1){
@@ -117,26 +135,31 @@ public:
             frame_t += delta_t;
             delta_spawn += delta_t;
             if(firing and refire>fire_rate) fire_bullet();
-
-            update_objects(delta_t);
-            if(dead){
-                sprintf(buffer,"Your score was: %dCongratulations, RoidMaster\n", spawn_rate*100);
-            }
-            if(dead and effect_list.front().done){
+            if(dead and death_timer>2000)
+                death_timer = 2000;
+            if(dead and death_timer >= 0 and death_timer <= 3000)   death_timer -= delta_t;
+            if(dead and death_timer<0){
+                sprintf(buffer, "Your score was %d. Noice", spawn_rate*100);
+                stringRGBA(r, 400,400, buffer, 255, 255, 255, 255);
+                SDL_RenderPresent(r);
+                sleep(3);
                 object_list.clear();
                 effect_list.clear();
                 dead = false;
                 return enum_dead;
             }
-            screen_offset.x = player->pos.x - CANVAS_WIDTH/2;    //using center as 0,0
-            screen_offset.y = player->pos.y - CANVAS_HEIGHT/2;
+            if(!dead){
+                screen_offset.x = player->pos.x - CANVAS_WIDTH/2;    //using center as 0,0
+                screen_offset.y = player->pos.y - CANVAS_HEIGHT/2;
+            }
             if(frame_t > 17){
                 draw_objects(r,window);
                 frame_t=0;
             }
-            delete_objects();
-            delta_spawn = spawn_objects(delta_spawn);
+            update_objects(delta_t);
             check_collisions();
+            delete_objects();
+            if(!dead)   delta_spawn = spawn_objects(delta_spawn);
             SDL_Event e;
             while(SDL_PollEvent(&e)){
                 switch(e.type){
@@ -155,15 +178,16 @@ public:
                 }
             }
             spawn_rate = (abs(screen_offset.x) + abs(screen_offset.y)) / 300 + 1;
-            sprintf(score, "Speed: %d", (int)player->velocity.length());
-            sprintf(buffer, "Num_Objects: %d", (int)object_list.size());
+            sprintf(buffer, "Score: %d", spawn_rate*100);
             last_frame=current_frame;
         }
     }
     void draw_objects(SDL_Renderer *r, SDL_Window *w){
         SDL_RenderClear(r);
-        background.draw();
-        generator.draw();
+        if(!menu){
+            background.draw();
+            if(!dead)   generator.draw();
+        }
         list<GameObject>::iterator it=object_list.begin();
         ++it; //skip past player. need to draw on top of bullets
         for(; it!=object_list.end(); ++it){
@@ -173,8 +197,7 @@ public:
         for(list<Effect>::iterator e_it=effect_list.begin(); e_it!=effect_list.end(); ++e_it){
             (*e_it).draw(r, w);
         }
-        stringRGBA(r, 10,10, buffer, 255, 255, 255, 255);
-        stringRGBA(r, 10,50, score, 255, 255, 255, 255);
+        if(!menu)    stringRGBA(r, 10,10, buffer, 255, 255, 255, 255);
         SDL_RenderPresent(r);
     }
     void update_objects(int delta_ms){
@@ -215,19 +238,18 @@ public:
             }
             else{
                 direction = player->velocity.unit_vector();
-                int dist = CANVAS_HEIGHT/2 + CANVAS_WIDTH/2;
-                x = direction.x*dist;
-                y = direction.y*dist;
+                int dist = CANVAS_HEIGHT/3 + CANVAS_WIDTH/3;
+                x = direction.x*dist + (rand()%CANVAS_WIDTH/2 - CANVAS_WIDTH/4)*direction.y + CANVAS_WIDTH/2;
+                y = direction.y*dist + (rand()%CANVAS_HEIGHT/2 - CANVAS_HEIGHT/4)*direction.x + CANVAS_HEIGHT/2;
             }
             Vector2d pos(x,y);
-//            cout<<"spawn_loc: "<<pos<<endl;
             Vector2d end_point(CANVAS_WIDTH/2 + rand()%200 - 100,CANVAS_HEIGHT/2 + rand()%200 - 100); //Get some random point near center of screen 
                                                     //to set up vector for asteroid direction
             Vector2d dir = end_point - pos;
-            dir=dir.unit_vector();
-//            cout<<"dir: "<<dir<<endl;
+            dir = rv*dir.unit_vector() + Vector2d(rand()%(rv/4) - rv/2, rand()%(rv/4) - rv/2);
             pos += screen_offset;
-            obj=GameObject(enum_asteroid,asteroid,rand()%3 + 1,pos,true,rv*dir,0,rand()%180 - 360,0,false);
+            obj=GameObject(enum_asteroid,asteroid,rand()%3 + 1,pos,true,dir,0,rand()%360 - 180,0,false);
+            obj.make_hitbox(ast_box, 7);
             object_list.push_back(obj);
             respawn = 500 + rand()%5000/spawn_rate; 
             return 0;
@@ -306,14 +328,15 @@ public:
             angle_deg = (i*360/num_objects + rand()%45)%360;
             angle_rad = angle_deg*M_PI/180;
             new_dir = Vector2d(cos(angle_rad),sin(angle_rad));
-            new_pos = new_scale*15*new_dir + old_pos;
+            new_pos = new_scale*50*new_dir + old_pos;
             object_list.push_back(GameObject(enum_asteroid,asteroid,new_scale,new_pos,false,(rand()%121 + 20)*new_dir,angle_deg,rand()%180 -360,0,false));
+            object_list.back().make_hitbox(ast_box,7);
         }
         effect_list.push_back(Effect(explosion, 100, false, new_scale + 1, old_pos));
     }
         
 private:
-    bool firing, particles_active, dead;
+    bool firing, particles_active, dead, menu;
     int refire, spawn_rate, respawn;
     static const int fire_rate=200;    //ms/bullet
     void handle_key_down(SDL_Keycode key){
@@ -351,7 +374,7 @@ private:
     }
     //Move to a ship class at some point
     void fire_bullet(){
-        GameObject obj(enum_bullet,bullet,2,player->pos + player->direction*17,
+        GameObject obj(enum_bullet,bullet,2,player->pos + player->direction*27,
                 true, 350*player->direction + player->velocity,player->rotation,0,100,false);
         object_list.push_back(obj); 
         refire=0;

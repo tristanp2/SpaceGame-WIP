@@ -77,7 +77,6 @@ private:
         Uint32 space_colour = 0;
         int dist;
         max_dist -= min_dist;
-        cout<<hex<<"star: "<<star_colour<<endl<<"space: "<<space_colour<<dec<<endl;
         for(int i=0; i<pixel_count; i++){
             dist = rand()%max_dist + min_dist;
             do{
