@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <list>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL2_gfxPrimitives.h>
 
 #include "vector2d.h"
 #include "point.h"

@@ -7,11 +7,23 @@
 #include "sprite.h"
 #include "point.h"
 
+struct Texture{
+    int ref_count;
+    Texture(SDL_Texture *tex){
+        texture = tex;
+        ref_count = 1;
+    }
+    SDL_Texture* get_tex(){
+        return texture;
+    }
+private:
+    SDL_Texture *texture;
+};
 class FadeParticle{
 public:
     FadeParticle(SDL_Surface* surf, SDL_Renderer* r,int pos_x, int pos_y, Vector2d velocity, int max_frame, int ms_per_frame){
         this->r = r;
-        tex = SDL_CreateTextureFromSurface(r, surf);
+        tex = new Texture(SDL_CreateTextureFromSurface(r, surf));
         draw_rect.w = surf->w;
         draw_rect.h = surf->h;
         draw_rect.x = pos_x;
@@ -24,10 +36,8 @@ public:
     }
     FadeParticle(const FadeParticle &other){
         r = other.r;
-        Uint32 format;
-        int access, w, h;
-        SDL_QueryTexture(other.tex, &format, &access, &w, &h);
-        tex = SDL_CreateTexture(r, format, access, w, h);
+        tex = other.tex;
+        tex->ref_count++;
         draw_rect = other.draw_rect;
         velocity = other.velocity;
         frame = other.frame;
@@ -38,7 +48,7 @@ public:
 
     void render(){
         if(!is_dead()){
-            SDL_RenderCopy(r, tex, NULL, &draw_rect); 
+            SDL_RenderCopy(r, tex->get_tex(), NULL, &draw_rect); 
         }
     }
     bool is_dead(){
@@ -62,7 +72,7 @@ public:
 //        SDL_SetTextureAlphaMod(tex, alpha);
     }
 private:
-    SDL_Texture* tex;
+    Texture* tex;
     SDL_Renderer* r;
     SDL_Rect draw_rect;
     Vector2d velocity;
@@ -117,4 +127,5 @@ private:
     list<FadeParticle>  particle_list;
     int max_particles, ms_per_frame;
 };
+        
 #endif
